@@ -2,7 +2,7 @@
 
 #### Description
 
-The console process suffers from an assertion failure vulnerability. There is a reachable assertion in the console process. By sending a crafted packet, an authenticated remote user can crash the console process due to assertion failure.
+The `console` process suffers from an assertion failure vulnerability. There is a reachable assertion in the console process. By sending a crafted packet, an authenticated remote user can crash the `console` process due to assertion failure.
 
 Against stable `6.46.3`, the poc resulted in the following crash captured by `gdb`.
 
