@@ -2,7 +2,7 @@
 
 #### Description
 
-The `traceroute` process suffers from a memory corruption vulnerability. By sending a crafted packet, an authenticated remote user can crash the `traceroute` process due to invalid memory access.
+The `traceroute` process suffers from a memory corruption vulnerability. By sending a crafted packet, an authenticated remote user can crash the `traceroute` process, for the count of loop operation is controllable.
 
 Against stable `6.46.3`, the poc resulted in the following crash captured by `gdb`.
 
@@ -18,7 +18,7 @@ Program received signal SIGSEGV, Segmentation fault.
 0x0804da3e in ?? ()                                   
 (gdb) i r                                             
 eax            0x0      0                             
-ecx            0xfdffd1 16646097                      
+ecx            0xfdffd1 16646097    <=== controllable                      
 edx            0x7e9df530       2124281136            
 ebx            0x8052848        134555720             
 esp            0x7e9df530       0x7e9df530            
