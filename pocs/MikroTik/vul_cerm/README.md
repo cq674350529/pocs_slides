@@ -11,3 +11,8 @@ Against long-term `6.45.8`, the poc resulted in the high cpu load on the device.
 #### Affected Version
 
 This vulnerability was initially found in long-term  `6.44.6`, and was fixed since stable `6.46` .
+
+#### Timeline
+
++ 2020/01/06 - report the vulnerability to the vendor
++ 2020/01/08 - vendor confirms the vulnerability and fix it since stable `6.46`

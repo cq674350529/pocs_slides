@@ -75,6 +75,7 @@ This vulnerability was initially found in long-term  `6.44.5`. It seems that the
 #### Timeline
 
 + 2019/08/26 - report the vulnerability to the vendor
++ 2019/08/28 - vendor confirms the vulnerability and will fix it as soon as possible 
 + 2020/04/14 - still no fix yet
 
 
