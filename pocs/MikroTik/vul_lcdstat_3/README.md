@@ -68,7 +68,10 @@ And the crash dump in `/rw/logs/backtrace.log` was:
 
 #### Affected Version
 
-This vulnerability was initially found in long-term  `6.44.6`, and was fixed in stable `6.47.0`.
+This vulnerability was initially found in long-term  `6.44.6`, and was fixed in stable `6.47`.
 
+#### Timeline
 
++ 2020/03/11 - report the vulnerability to the vendor
++ 2020/06/02 - vendor fix it in stable `6.47`
 
