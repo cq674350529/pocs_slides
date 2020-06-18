@@ -1,0 +1,86 @@
+### vul_wireless
+
+#### Description
+
+The `wireless` process suffers from a memory corruption vulnerability. By sending a crafted packet, an authenticated remote user can crash the `wireless` process due to invalid memory access.
+
+Against stable `6.46.5`, the poc resulted in the following crash captured by `gdb`.
+
+```shell
+(gdb) c                                                             
+Continuing.                                                         
+                                                                    
+Program received signal SIGSEGV, Segmentation fault.                
+=> 0x8070dbe:   inc    DWORD PTR ds:0x0                             
+   0x8070dc4:   add    esp,0x10                                     
+   0x8070dc7:   push   ebx                                          
+   0x8070dc8:   mov    eax,DWORD PTR [esi+0x8]                      
+0x08070dbe in ?? ()                                                 
+(gdb) i r                                                           
+eax            0x81164c4        135357636                           
+ecx            0x811814c        135364940                           
+edx            0x1      1                                           
+ebx            0x776fcaf0       2003815152                          
+esp            0x7fc6dfd0       0x7fc6dfd0                          
+ebp            0x7fc6e008       0x7fc6e008                          
+esi            0x8130a58        135465560                           
+edi            0x7fc6e084       2143740036                          
+eip            0x8070dbe        0x8070dbe                           
+eflags         0x10202  [ IF RF ]                                   
+cs             0x73     115                                         
+ss             0x7b     123                                         
+ds             0x7b     123                                         
+es             0x7b     123                                         
+fs             0x0      0                                           
+gs             0x33     51                                          
+(gdb) info inferiors                                                
+  Num  Description       Executable                                 
+* 1    process 120       target:/ram/pckg/wireless/nova/bin/wireless
+```
+
+And the crash dump in `/rw/logs/backtrace.log` was:
+
+```shell
+# cat /rw/logs/backtrace.log 
+2020.06.04-18:12:52.69@0: 
+2020.06.04-18:12:52.69@0: /ram/pckg/wireless/nova/bin/wireless
+2020.06.04-18:12:52.69@0: --- signal=11 --------------------------------------------
+2020.06.04-18:12:52.69@0: 
+2020.06.04-18:12:52.69@0: eip=0x08070dbe eflags=0x00010202
+2020.06.04-18:12:52.69@0: edi=0x7fc6e084 esi=0x08130a58 ebp=0x7fc6e008 esp=0x7fc6dfd0
+2020.06.04-18:12:52.69@0: eax=0x081164c4 ebx=0x776fcaf0 ecx=0x0811814c edx=0x00000001
+2020.06.04-18:12:52.69@0: 
+2020.06.04-18:12:52.69@0: maps:
+2020.06.04-18:12:52.69@0: 08048000-08115000 r-xp 00000000 00:19 99         /ram/pckg/wireless/nova/bin/wireless
+2020.06.04-18:12:52.69@0: 7749f000-774a1000 r-xp 00000000 00:0c 959        /lib/libdl-0.9.33.2.so
+2020.06.04-18:12:52.69@0: 774a3000-774d8000 r-xp 00000000 00:0c 964        /lib/libuClibc-0.9.33.2.so
+2020.06.04-18:12:52.69@0: 774dc000-774f6000 r-xp 00000000 00:0c 960        /lib/libgcc_s.so.1
+2020.06.04-18:12:52.69@0: 774f7000-77506000 r-xp 00000000 00:0c 944        /lib/libuc++.so
+2020.06.04-18:12:52.69@0: 77507000-77664000 r-xp 00000000 00:0c 954        /lib/libcrypto.so.1.0.0
+2020.06.04-18:12:52.69@0: 77674000-776bf000 r-xp 00000000 00:0c 956        /lib/libssl.so.1.0.0
+2020.06.04-18:12:52.69@0: 776c3000-776cd000 r-xp 00000000 00:0c 961        /lib/libm-0.9.33.2.so
+2020.06.04-18:12:52.69@0: 776cf000-776ec000 r-xp 00000000 00:0c 947        /lib/libucrypto.so
+2020.06.04-18:12:52.69@0: 776ed000-776f3000 r-xp 00000000 00:0c 951        /lib/liburadius.so
+2020.06.04-18:12:52.69@0: 776f4000-776fc000 r-xp 00000000 00:0c 950        /lib/libubox.so
+2020.06.04-18:12:52.69@0: 776fd000-77749000 r-xp 00000000 00:0c 946        /lib/libumsg.so
+2020.06.04-18:12:52.69@0: 7774f000-77756000 r-xp 00000000 00:0c 958        /lib/ld-uClibc-0.9.33.2.so
+2020.06.04-18:12:52.69@0: 
+2020.06.04-18:12:52.69@0: stack: 0x7fc6f000 - 0x7fc6dfd0 
+2020.06.04-18:12:52.69@0: c4 64 11 08 07 c8 0f 08 f0 f0 10 08 f0 f0 10 08 28 fe 12 08 84 e0 c6 7f 08 e0 c6 7f 63 3d 06 08 
+2020.06.04-18:12:52.69@0: 0c 00 00 00 00 00 00 00 18 e0 c6 7f f0 ca 6f 77 58 0a 13 08 84 e0 c6 7f 38 e0 c6 7f 7c 7a 6f 77 
+2020.06.04-18:12:52.69@0: 
+2020.06.04-18:12:52.69@0: code: 0x8070dbe
+2020.06.04-18:12:52.69@0: ff 05 00 00 00 00 83 c4 10 53 8b 46 08 0f b6 40
+```
+
+#### Affected Version
+
+This vulnerability was initially found in stable  `6.46.3`, and was fixed in stable `6.47`.
+
+#### Timline
+
++ 2020/04/08 - report the vulnerability to the vendor
++ 2020/06/02 - vendor fix it in stable `6.47`
+
+
+

@@ -2,9 +2,9 @@
 
 #### Description
 
-The smb process suffers from a memory corruption vulnerability. By sending a crafted packet, an unauthenticated remote user can crash the smb process due to invalid memory access.
+The `smb` process suffers from a memory corruption vulnerability. By sending a crafted packet, an unauthenticated remote user can crash the `smb` process due to invalid memory access.
 
-> In default, the smb service is disabled.
+> In default, the `smb` service is disabled.
 
 #### Reproduce
 

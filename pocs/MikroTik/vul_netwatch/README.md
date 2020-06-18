@@ -1,0 +1,80 @@
+### vul_netwatch
+
+#### Description
+
+The `netwatch` process suffers from a division-by-zero vulnerability. By sending a crafted packet, an authenticated remote user can crash the `netwatch` process due to arithmetic exception.
+
+Against stable `6.46.5`, the poc resulted in the following crash captured by `gdb`.
+
+```shell
+(gdb) c
+Continuing.
+
+Program received signal SIGFPE, Arithmetic exception.
+=> 0x804c6d7:   div    esi
+   0x804c6d9:   mov    edx,DWORD PTR [ebx+0x30]
+   0x804c6dc:   cmp    edx,eax
+   0x804c6de:   jae    0x804c74e
+0x0804c6d7 in ?? ()
+(gdb) i r
+eax            0x0      0
+ecx            0x0      0
+edx            0x0      0
+ebx            0x8051020        134549536
+esp            0x7ffff3b0       0x7ffff3b0
+ebp            0x7ffff3f8       0x7ffff3f8
+esi            0x0      0
+edi            0x5ed9208c       1591287948
+eip            0x804c6d7        0x804c6d7
+eflags         0x10246  [ PF ZF IF RF ]
+cs             0x73     115
+ss             0x7b     123
+ds             0x7b     123
+es             0x7b     123
+fs             0x0      0
+gs             0x33     51
+(gdb) info inferiors
+  Num  Description       Executable
+* 1    process 384       target:/ram/pckg/advanced-tools/nova/bin/netwatch                      
+```
+
+And the crash dump in `/rw/logs/backtrace.log` was:
+
+```shell
+# cat /rw/logs/backtrace.log 
+2020.06.04-16:25:57.65@0: 
+2020.06.04-16:25:57.65@0: 
+2020.06.04-16:25:57.65@0: /ram/pckg/advanced-tools/nova/bin/netwatch
+2020.06.04-16:25:57.65@0: --- signal=8 --------------------------------------------
+2020.06.04-16:25:57.65@0: 
+2020.06.04-16:25:57.65@0: eip=0x0804c6d7 eflags=0x00010246
+2020.06.04-16:25:57.65@0: edi=0x5ed9208c esi=0x00000000 ebp=0x7ffff3f8 esp=0x7ffff3b0
+2020.06.04-16:25:57.65@0: eax=0x00000000 ebx=0x08051020 ecx=0x00000000 edx=0x00000000
+2020.06.04-16:25:57.65@0: 
+2020.06.04-16:25:57.65@0: maps:
+2020.06.04-16:25:57.65@0: 08048000-0804d000 r-xp 00000000 00:1a 14         /ram/pckg/advanced-tools/nova/bin/netwatch
+2020.06.04-16:25:57.65@0: 77f41000-77f76000 r-xp 00000000 00:0c 964        /lib/libuClibc-0.9.33.2.so
+2020.06.04-16:25:57.65@0: 77f7a000-77f94000 r-xp 00000000 00:0c 960        /lib/libgcc_s.so.1
+2020.06.04-16:25:57.65@0: 77f95000-77fa4000 r-xp 00000000 00:0c 944        /lib/libuc++.so
+2020.06.04-16:25:57.65@0: 77fa5000-77ff1000 r-xp 00000000 00:0c 946        /lib/libumsg.so
+2020.06.04-16:25:57.65@0: 77ff7000-77ffe000 r-xp 00000000 00:0c 958        /lib/ld-uClibc-0.9.33.2.so
+2020.06.04-16:25:57.65@0: 
+2020.06.04-16:25:57.65@0: stack: 0x80000000 - 0x7ffff3b0 
+2020.06.04-16:25:57.65@0: d8 f4 ff 7f 80 f6 ff 7f 06 00 00 00 d0 f3 ff 7f 84 e5 04 08 0b 00 ff 08 e8 f3 ff 7f 06 00 00 00 
+2020.06.04-16:25:57.65@0: 20 10 05 08 e4 1a ff 77 f8 f3 ff 7f 22 2c fc 77 d8 f4 ff 7f 0b 00 ff 08 08 f4 ff 7f e4 1a ff 77 
+2020.06.04-16:25:57.65@0: 
+2020.06.04-16:25:57.65@0: code: 0x804c6d7
+2020.06.04-16:25:57.65@0: f7 f6 8b 53 30 39 c2 73 6e 42 89 53 30 83 ec 0c
+```
+
+#### Affected Version
+
+This vulnerability was initially found in stable  `6.46.2`, and was fixed in stable `6.47`.
+
+#### Timeline
+
++ 2020/04/20 - report the vulnerability to the vendor
++ 2020/06/02 - vendor fix it in stable `6.47`
+
+
+
