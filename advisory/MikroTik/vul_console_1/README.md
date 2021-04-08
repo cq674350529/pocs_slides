@@ -2,7 +2,7 @@
 
 #### Description
 
-The `console` process suffers from a memory corruption vulnerability. By sending a crafted packet, an authenticated remote user can crash the `console` process due to NULL pointer reference.
+The `console` process suffers from a memory corruption vulnerability. By sending a crafted packet, an authenticated remote user can crash the `console` process due to NULL pointer dereference.
 
 Against stable `6.46.3`, the poc resulted in the following crash captured by `gdb`.
 

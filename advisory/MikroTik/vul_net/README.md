@@ -4,7 +4,7 @@
 
 The `net` process suffers from a stack exhaustion vulnerability. By sending a crafted packet to the `net` process, an authenticated remote user can trigger a stack exhaustion vulnerability via recursive function calls.
 
-When testing the proof of concept on an x86 RouterOS VM, this vulnerability didn't just crash `net` but caused the whole system to reboot.
+When testing the proof of concept on an x86 RouterOS VM, this vulnerability didn't just crash `net` process but caused the whole system to reboot.
 
 Against stable `6.46.5`, the poc resulted in the following crash captured by `gdb`.
 

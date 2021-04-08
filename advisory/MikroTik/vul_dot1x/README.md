@@ -2,7 +2,7 @@
 
 #### Description
 
-The `dot1x` process suffers from a memory corruption vulnerability. By sending a crafted packet, an authenticated remote user can crash the `dot1x` process due to NULL pointer reference.
+The `dot1x` process suffers from a memory corruption vulnerability. By sending a crafted packet, an authenticated remote user can crash the `dot1x` process due to NULL pointer dereference.
 
 Against stable `6.46.5`, the poc resulted in the following crash captured by `gdb`.
 

@@ -1,1 +1,1 @@
-share pocs and slides related to IoT
+share advisory, poc and slides related to IoT

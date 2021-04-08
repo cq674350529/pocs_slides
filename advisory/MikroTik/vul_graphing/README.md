@@ -2,7 +2,7 @@
 
 #### Description
 
-The `graphing` process suffers from a memory corruption vulnerability. By sending a crafted packet, an authenticated remote user can crash the `graphing` process due to invalid memory access.
+The `graphing` process suffers from a memory corruption vulnerability. By sending a crafted packet, an authenticated remote user can crash the `graphing` process due to NULL pointer dereference.
 
 Against stable `6.46.5`, the poc resulted in the following crash captured by `gdb`.
 
