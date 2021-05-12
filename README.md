@@ -1,1 +1,1 @@
-share advisory, poc and slides related to IoT
+share advisory, poc, slides and scripts to IoT
