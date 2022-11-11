@@ -1,0 +1,116 @@
+### vul_hotspot_1
+
+#### Description
+
+The `hotspot` process suffers from an out-of-bounds read vulnerability. Due to lack of proper validation, by sending a crafted nova message with a specific u32_id key with negative value, it's possible to cause out-of-bounds read, which may affect the function pointer of an indirect call furtherly. It's possible for an authenticated user to achieve code execution.
+
+Against stable `6.46.5`, the poc resulted in the following crash captured by `gdb`.
+
+```shell
+(gdb) c
+Continuing.
+
+Program received signal SIGSEGV, Segmentation fault.
+=> 0x65737520:  Error while running hook_stop:
+Cannot access memory at address 0x65737520
+0x65737520 in ?? ()
+(gdb) i r
+eax            0x7fad0fb4       2142048180
+ecx            0x0      0
+edx            0x65737520       1702065440
+ebx            0x6d7ae08a       1836769418
+esp            0x7fad0f5c       0x7fad0f5c
+ebp            0x7fad0fd8       0x7fad0fd8
+esi            0xffffffec       -20
+edi            0xffffffff       -1
+eip            0x65737520       0x65737520
+eflags         0x10202  [ IF RF ]
+cs             0x73     115
+ss             0x7b     123
+ds             0x7b     123
+es             0x7b     123
+fs             0x0      0
+gs             0x33     51
+(gdb) info inferiors
+  Num  Description       Executable
+* 1    process 201       target:/ram/pckg/hotspot/nova/bin/hotspot               
+```
+
+And the crash dump in `/rw/logs/backtrace.log` was:
+
+```shell
+# cat /rw/logs/backtrace.log 
+2020.06.22-15:04:20.55@0: 
+2020.06.22-15:04:20.55@0: 
+2020.06.22-15:04:20.55@0: /ram/pckg/hotspot/nova/bin/hotspot
+2020.06.22-15:04:20.55@0: --- signal=11 --------------------------------------------
+2020.06.22-15:04:20.55@0: 
+2020.06.22-15:04:20.55@0: eip=0x65737520 eflags=0x00010202
+2020.06.22-15:04:20.55@0: edi=0xffffffff esi=0xffffffec ebp=0x7fad0fd8 esp=0x7fad0f5c
+2020.06.22-15:04:20.55@0: eax=0x7fad0fb4 ebx=0x6d7ae08a ecx=0x00000000 edx=0x65737520
+2020.06.22-15:04:20.55@0: 
+2020.06.22-15:04:20.55@0: maps:
+2020.06.22-15:04:20.55@0: 08048000-08078000 r-xp 00000000 00:12 34         /ram/pckg/hotspot/nova/bin/hotspot
+2020.06.22-15:04:20.55@0: 7770d000-77742000 r-xp 00000000 00:0c 964        /lib/libuClibc-0.9.33.2.so
+2020.06.22-15:04:20.55@0: 77746000-77760000 r-xp 00000000 00:0c 960        /lib/libgcc_s.so.1
+2020.06.22-15:04:20.55@0: 77761000-77770000 r-xp 00000000 00:0c 944        /lib/libuc++.so
+2020.06.22-15:04:20.55@0: 77771000-7778e000 r-xp 00000000 00:0c 947        /lib/libucrypto.so
+2020.06.22-15:04:20.55@0: 7778f000-77795000 r-xp 00000000 00:0c 951        /lib/liburadius.so
+2020.06.22-15:04:20.55@0: 77796000-777e2000 r-xp 00000000 00:0c 946        /lib/libumsg.so
+2020.06.22-15:04:20.55@0: 777e5000-777ed000 r-xp 00000000 00:0c 950        /lib/libubox.so
+2020.06.22-15:04:20.55@0: 777f1000-777f8000 r-xp 00000000 00:0c 958        /lib/ld-uClibc-0.9.33.2.so
+2020.06.22-15:04:20.55@0: 
+2020.06.22-15:04:20.55@0: stack: 0x7fad2000 - 0x7fad0f5c 
+2020.06.22-15:04:20.55@0: 91 f9 05 08 8a e0 7a 6d 9c 0f ad 7f b4 0f ad 7f 00 00 00 00 9c 0f ad 7f 01 00 00 00 03 00 00 00 
+2020.06.22-15:04:20.55@0: 00 4f 74 77 9c 0f ad 7f ff ff ff ff 1c e0 07 08 18 e0 07 08 b0 fb 07 08 00 00 00 00 c8 0f ad 7f 
+2020.06.22-15:04:20.55@0: 
+2020.06.22-15:04:20.55@0: code: 0x65737520
+```
+
+#### Details
+
+It can be triggered by sending a nova message to the default handler. In its vtable, the default `nv::Handler::cmdUnknown()` is overwritten by `sub_805F834()`.
+
+In `sub_805F834()`, if `a5` equals to `0xfe0008`, the routine will go to `(2)`, where the value of u32_id `0xfe000e` will be read and assigned to `v51`. Then in the for loop at `(3)`, `v51` is assigned to variable `i`, and a signed comparison is used in the condition statement. Later at `(4)`, variable `i` is used as an index to read from address `0x80779E0`. The value will be assigned to `v12` at `(5)`. Then at `(6)`, `v12` will be regarded as a function pointer.
+The key point is the signed comparison at `(3)`. If we provide a negative value like `-1`, then we can cause out-of-bounds read at `(4)`, and furtherly affect the function pointer at `(6)`. By sending a crafted nova message, it's possible to achieve code execution.
+
+```c++
+// file: /ram/pckg/hotspot/nova/bin/hotspot in stable 6.46.5
+nv::Handler sub_805F834(int a1, nv::Handler *a2, nv::message *a3, unsigned int a4, int a5)
+{
+  if ( a5 != 0xFE0008 ) // (1) command id
+  {
+    /* ... case for other command ids ... */
+  }
+  v55 = (nv::message **)dword_8078804;
+  v5 = nv::message::get<nv::message_id>(a4, 0xFE000F, a1, a1);
+  nv::message::message(v58, v5);
+  v51 = nv::message::get<nv::u32_id>(a4, 0xFE000E);  // (2)
+  /* ... */
+  if ( v51 )
+  {
+    /* ... */
+    for ( i = v51; i <= 11; ++i )  // (3) signed comparison
+    {
+      if ( dword_80779E0[5 * i] )
+      {
+        string::string((string *)v64);
+        v11 = dword_80779E0[5 * i];     // (4) out-of-bounds read
+        v12 = (int (__cdecl *)(char *, char *, char *, bool))v11;  // (5)
+        v13 = dword_80779E4[5 * i];
+        if ( (v11 & 1) != 0 )
+          v12 = *(int (__cdecl **)(char *, char *, char *, bool))(*(char **)((char *)v55 + v13) + v11 - 1);
+        v14 = v12((char *)v55 + v13, v58, v64, i != v51);  // (6) control flow hijacking
+        /* ... */
+```
+
+#### Affected Version
+
+This vulnerability was initially found in long-term `6.44.6`, and was fixed in stable `7.5`.
+
+#### Timeline
+
++ 2022/07/29 - reported the vulnerability to the vendor
++ 2022/08/16 - vendor confirmed the vulnerability and would fix it in future releases
++ 2022/08/26 - vendor confirmed that the vulnerability was fixed
++ 2022/08/31 - stable 7.5 was released and this vulnerability was fixed

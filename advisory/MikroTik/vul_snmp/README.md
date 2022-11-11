@@ -1,0 +1,125 @@
+### vul_snmp
+
+#### Description
+
+The `snmp` process suffers from an out-of-bounds read vulnerability. Due to lack of proper validation on value of a specific u32_id key, by sending a crafted packet, it's possible to cause out-of-bounds read, which may affect the function pointer of an indirect call furtherly. It's possible for an authenticated user to achieve code execution.
+
+Against stable `6.47`, the poc resulted in the following crash dump.          
+
+```shell
+---- current v6.47 Jun/02/2020 07:38:00 ----
+2022.10.12-16:41:40.81@0:
+2022.10.12-16:41:40.81@0: /nova/bin/snmp
+2022.10.12-16:41:40.81@0: --- signal=11 --------------------------------------------
+2022.10.12-16:41:40.81@0: 
+// ... register details are missing in the generated autosupout.rif
+2022.10.12-16:41:40.81@0: 
+2022.10.12-16:41:40.81@0: 776ad000-776b3000 r-xp 00000000 00:19 92     /ram/pckg/wireless/nova/lib/snmp/wireless.so
+2022.10.12-16:41:40.81@0: 776b4000-776b7000 r-xp 00000000 00:12 16     /ram/pckg/ups/nova/lib/snmp/ups.so
+2022.10.12-16:41:40.81@0: 776b8000-776ba000 r-xp 00000000 00:13 95     /ram/pckg/ppp/nova/lib/snmp/aaasession.so
+...
+2022.10.12-16:41:40.81@0: 776c4000-776c7000 r-xp 00000000 00:11 83     /ram/pckg/ipv6/nova/lib/snmp/ipv6.so
+2022.10.12-16:41:40.81@0: 776c9000-776fe000 r-xp 00000000 00:0c 966    /lib/libuClibc-0.9.33.2.so
+2022.10.12-16:41:40.81@0: 77702000-7771c000 r-xp 00000000 00:0c 962    /lib/libgcc_s.so.1
+2022.10.12-16:41:40.81@0: 7771d000-7772c000 r-xp 00000000 00:0c 945    /lib/libuc++.so
+2022.10.12-16:41:40.81@0: 7772d000-7774a000 r-xp 00000000 00:0c 948    /lib/libucrypto.so
+2022.10.12-16:41:40.81@0: 7774b000-7774d000 r-xp 00000000 00:0c 961    /lib/libdl-0.9.33.2.so
+2022.10.12-16:41:40.81@0: 7774f000-77757000 r-xp 00000000 00:0c 951    /lib/libubox.so
+2022.10.12-16:41:40.81@0: 77758000-777a4000 r-xp 00000000 00:0c 947    /lib/libumsg.so
+2022.10.12-16:41:40.81@0: 777aa000-777b1000 r-xp 00000000 00:0c 960    /lib/ld-uClibc-0.9.33.2.so
+2022.10.12-16:41:40.81@0:
+2022.10.12-16:41:40.81@0: backtrace: 0x00000001 0x77725a21 0x08071054 0x0806e019 0x7775396a 0x7777fff9 0x7777caca 0x7777f092 0x7777ee4e 0x7777a85b 0x7777a2a5 0x7777a3bf 0x7778103f 0x08056bb5 0x776f7fcb 0x08056c0d
+```
+
+#### Details
+
+According to the backtrace information, in `Item::setConfig()`,  at `(1)`, it will read value of u32_id `20`, and save it to the memory pointed by `this + 6`. Then in normal cases, the routine will reach `(2)`, where `Item::regenerateKeys()` is called.
+
+```c++
+// file: /nova/bin/snmp in stable 6.47
+int Item::setConfig(Item *this, const nv::message *a2)
+{
+  /* ... */
+  *((_DWORD *)this + 6) = nv::message::get<nv::u32_id>(a2, 20, *((_DWORD *)this + 6));  // (1)
+  *((_DWORD *)this + 7) = nv::message::get<nv::u32_id>(a2, 21, *((_DWORD *)this + 7));
+  /* ... */
+  if ( loop )
+    Item::regenerateKeys(this, (SnmpLooper *)((char *)loop + 1460));  // (2)
+  /* ... */
+```
+
+In `Item::regenerateKeys()`, the previous saved value will be assigned to `v2` at `(3)`. At `(4)`, `v2` is used as an offset to calculate address, and the result is assigned to `v3`. Then it will perform multiple lookups, in some cases, the routine will reach `(6)`, where `tree_base::insert_unique()` is called, and `v3` is passed as the second argument. It should be noted that the `v3` is controllable.
+
+```c++
+int Item::regenerateKeys(Item *this, const string *a2)
+{
+  v2 = *((_DWORD *)this + 6);  // (3)
+  v3 = 28 * v2 + 0x8074B84;  // (4) out-of-bounds read
+  v4 = 28 * v2 + 0x8074B88;
+  v5 = *((_DWORD *)&unk_8074B88 + 7 * v2) & 0xFFFFFFFC;  // (5)
+  v6 = v4;
+  /* ... search in tree related to v5 and change v6 ... */
+  if ( v6 == v4 )
+  {
+    v9 = *(_DWORD *)(v3 + 4) & 0xFFFFFFFC;
+    v10 = v6;
+    /* ... search in tree related to v9 and change v10 ...*/
+    if ( v10 == v6 )
+    {
+      /* ... */
+      tree_base::insert_unique((int)&v18, v3, v10, (int)&v23, 
+			(int)map_node_constr<string,vector<unsigned char>>); // (6)
+      /* ...*/
+}
+```
+
+In `tree_base::insert_unique()`, there are many calls to `sub_938c()`, where `a2` is passed as the first argument.
+
+```c++
+_DWORD * tree_base::insert_unique(_DWORD *a1, _DWORD *a2, int a3, int a4, void (__cdecl *a5)(int))
+{
+  if ( a3 == a2[2] )
+  {
+    if ( !*a2 || !sub_938C((int)a2, a4, a2[5] + a3) )
+      goto LABEL_12;
+    goto LABEL_10;
+  }
+  if ( (_DWORD *)a3 != a2 + 1 )
+  {
+    v7[0] = a3;
+    tree_iterator_base::decr((tree_iterator_base *)v7);
+    if ( !sub_938C((int)a2, a2[5] + v7[0], a4) || !sub_938C((int)a2, a4, a2[5] + a3) )
+      goto LABEL_12;
+LABEL_10:
+    a5(a4);
+    goto LABEL_11;
+  }
+  if ( !sub_938C((int)a2, a2[5] + a2[3], a4) )  //(7)
+  {
+    /* ... */
+}
+```
+
+
+In `sub_938C()`, as can be seen, it will dereference the value at `(a1+16)`, and invoke a function call. Since `a1` is controllable, by sending a crafted nova message, we can hijack the control flow.
+
+```c++
+int sub_938C(int a1, int a2, int a3)
+{
+  return (*(int (__stdcall **)(_DWORD, int, int))(a1 + 16))(
+			*(_DWORD *)(a1 + 24), a2, a3); //(8) control flow hijacking
+}
+```
+
+#### Affected Version
+
+This vulnerability was initially found in long-term  `6.44.6`. And the stable `7.6` seems to still suffer from this vulnerability.
+
+> The vendor responded that it was fixed in `7.6` version.
+
+#### Timeline
+
++ 2022/07/29 - reported the vulnerability to the vendor
++ 2022/08/16 - vendor confirmed the vulnerability
++ 2022/10/31 - vendor responded that it was fixed in `7.6` version
+
