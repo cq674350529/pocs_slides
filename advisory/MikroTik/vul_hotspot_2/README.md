@@ -4,6 +4,8 @@
 
 The `hotspot` process suffers from an assertion failure vulnerability. There is a reachable assertion in the `hotspot` process. By sending a crafted packet, an authenticated remote user can crash the `hotspot` process due to assertion failure.
 
+> The authentication here means that the user should be authenticated to the device itself (e.g. web, winbox).
+
 Against stable `6.46.5`, the poc resulted in the following crash dump.
 
 ```shell
