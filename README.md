@@ -6,7 +6,10 @@ Sharing my advisory, poc, slides and scripts to IoT / protocol security. You can
 
 ### Slides
 
-+ POC2022: [MikroTik RouterOS Security: The Forgotten IPC Message](POC2022-MikroTik_RouterOS_Security-The_Forgotten_IPC_Message.pdf)  &nbsp;([video](https://www.youtube.com/watch?v=fkigIlDe6vs))
++ BHEU2022: [LCDPwn: Breaking Enterprise-Things with Layer 2 Discovery Protocol Vulnerabilities Again](slides/EU-22-Chen-LCDPwn-Breaking-Enterprise.pdf)
+  + [(website) LCDPwn](https://cq674350529.github.io/lcdpwn/)
+
++ POC2022: [MikroTik RouterOS Security: The Forgotten IPC Message](slides/POC2022-MikroTik_RouterOS_Security-The_Forgotten_IPC_Message.pdf)  &nbsp;([video](https://www.youtube.com/watch?v=fkigIlDe6vs))
 + HITB2021AMS: [A Journey into Synology NAS](slides/HITB2021AMS-A_Journey_into_Synology_NAS.pdf)  &nbsp;([video](https://www.youtube.com/watch?v=XGmzeM2IEB4))
   + [(blog) A Journey into Synology NAS 系列一: 群晖NAS介绍](https://cq674350529.github.io/2021/08/30/A-Journey-into-Synology-NAS-%E7%B3%BB%E5%88%97%E4%B8%80-%E7%BE%A4%E6%99%96NAS%E4%BB%8B%E7%BB%8D/)
   + [(blog) A Journey into Synology NAS 系列二: findhostd服务分析](https://cq674350529.github.io/2021/09/12/A-Journey-into-Synology-NAS-%E7%B3%BB%E5%88%97%E4%BA%8C-findhostd%E6%9C%8D%E5%8A%A1%E5%88%86%E6%9E%90/)
