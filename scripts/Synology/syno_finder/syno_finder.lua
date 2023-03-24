@@ -10,44 +10,12 @@
 local synoFinderProtocol = Proto("SynoFinder", "Synology Finder Protocol")
 local protoName = "syno_finder"
 
-local typeNames = {
-    [0x1] = "Packet Type",
-    [0x11] = "Server Name",
-    [0x12] = "IP",
-    [0x13] = "Subnet Mask",
-    [0x14] = "DNS",
-    [0x15] = "DNS",
-    [0x19] = "Mac Address",
-    [0x1e] = "Gateway",
-    [0x20] = "Packet Subtype",
-    [0x21] = "Server Name",
-    [0x29] = "Mac Address",
-    [0x2a] = "Password",
-    [0x49] = "Build Num",
-    [0x4a] = "Username",
-    [0x4b] = "Share Folder",
-    [0x70] = "Unique",
-    [0x71] = "Support Raid",
-    [0x73] = "Serial Num",
-    [0x75] = "Port",
-    [0x76] = "Ssl Port",
-    [0x77] = "Product Version",
-    [0x78] = "Model",
-    [0x79] = "Memtest Error Code",
-    [0x7c] = "Mac Address",
-    [0x90] = "Small Fix Num",
-    [0xc0] = "Serial Num",
-    [0xc1] = "Os Name",
-    [0xc3] = "Support Onsite Tool",
-    [0xc4] = "Public Key",
-    [0xc5] = "Random Bytes"
-}
 
 local magic = ProtoField.bytes(protoName .. ".magic", "Magic", base.SPACE)
 
 -- subtree header
 local tlv = ProtoField.bytes(protoName .. "tlv", "TLV")     -- only used to group type, length and value
-local type = ProtoField.uint8(protoName .. ".type", "Type", base.HEX, typeNames)
+
 local length = ProtoField.uint8(protoName .. ".length", "Length")
 local value = ProtoField.bytes(protoName .. ".value", "Value")
 
@@ -115,6 +83,22 @@ local typeFields = {
     [0xc5] = randomBytes
 }
 
+-- reference: https://stackoverflow.com/questions/52012229/how-do-you-access-name-of-a-protofield-after-declaration
+function getFieldName(field)
+    local fieldString = tostring(field)
+    local i, j = string.find(fieldString, ": .* " .. protoName)
+    return string.sub(fieldString, i + 2, j - (1 + string.len(protoName)))
+end
+
+-- generate typeNames
+local typeNames = {}
+for tlvType, itemField in pairs(typeFields) do
+    typeNames[tlvType] = getFieldName(itemField)
+end
+
+local type = ProtoField.uint8(protoName .. ".type", "Type", base.HEX, typeNames)
+
+
 -- display in subtree header
 -- reference: 
 --   1) https://gist.github.com/FreeBirdLjj/6303864
@@ -180,16 +164,9 @@ local typeFormats = {
 synoFinderProtocol.fields = {
     magic,
     tlv, type, length, value,     -- tlv
-    packetType, serverName, ipAddress, ipMask, ipGateway, macAddress, dns, packetSubtype, password, buildNum, unique, supportRaid, username, shareFolder, port, sslPort, productVersion, model, memtestErrorCode, smallFixNum, serialNum, osName, supportOnsiteTool, publicKey, randomBytes,       -- specific value field
-    value8, value16, value32
+    packetType, serverName, ipAddress, ipMask, ipGateway, macAddress, dns, packetSubtype, password, buildNum, unique, supportRaid, username, shareFolder, port, sslPort, productVersion, model, memtestErrorCode, smallFixNum, serialNum, osName, supportOnsiteTool, publicKey, randomBytes,       -- specific value fields
+    value8, value16, value32      -- general value fields
 }
-
--- reference: https://stackoverflow.com/questions/52012229/how-do-you-access-name-of-a-protofield-after-declaration
-function getFieldName(field)
-    local fieldString = tostring(field)
-    local i, j = string.find(fieldString, ": .* " .. protoName)
-    return string.sub(fieldString, i + 2, j - (1 + string.len(protoName)))
-end
 
 function getFieldType(field)
     local fieldString = tostring(field)
@@ -200,9 +177,9 @@ end
 function getFieldByType(type, length)
     local tmp_field = typeFields[type]
     if(tmp_field) then
-        return tmp_field    -- specific value filed
+        return tmp_field        -- specific value filed
     else
-        if length == 4 then     -- common value field
+        if length == 4 then     -- general value field
             return value32
         elseif length == 2 then
             return value16
