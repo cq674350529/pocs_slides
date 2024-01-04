@@ -1,12 +1,16 @@
 Sharing my advisory, poc, slides and scripts to IoT / protocol security. You can find me at:
 
++ Medium: [https://medium.com/@cq674350529](https://medium.com/@cq674350529)
+
 + Blog: [https://cq674350529.github.io/](https://cq674350529.github.io/)
 + Mail: [cq674350529@163.com](mailto:cq674350529@163.org)
 + Twitter: [@cq674350529](https://twitter.com/cq674350529)
 
 ### Slides
 
-+ BHEU2022: [LCDPwn: Breaking Enterprise-Things with Layer 2 Discovery Protocol Vulnerabilities Again](slides/EU-22-Chen-LCDPwn-Breaking-Enterprise.pdf)
++ BHEU2023: [Breaking Theoretical Limits: The Gap Between Virtual NICs and Physical Network Cards](http://i.blackhat.com/EU-23/Presentations/EU-23-Quan-Breaking-Theoretical-Limits_REV2.pdf)&nbsp;*(cooperated)*
+
++ BHEU2022: [LCDPwn: Breaking Enterprise-Things with Layer 2 Discovery Protocol Vulnerabilities Again](slides/EU-22-Chen-LCDPwn-Breaking-Enterprise.pdf)  &nbsp;([video](https://www.youtube.com/watch?v=qIwKg2qny0c))
   + [(website) LCDPwn](https://cq674350529.github.io/lcdpwn/)
 
 + POC2022: [MikroTik RouterOS Security: The Forgotten IPC Message](slides/POC2022-MikroTik_RouterOS_Security-The_Forgotten_IPC_Message.pdf)  &nbsp;([video](https://www.youtube.com/watch?v=fkigIlDe6vs))
@@ -25,5 +29,5 @@ Sharing my advisory, poc, slides and scripts to IoT / protocol security. You can
 
 ### Scripts
 
-+ [syno_finder](scripts/wireshark_plugins/syno_finder): a wireshark plugin to disassemble the Synology finder protocol (9999/udp)
++ [syno_finder](scripts/Synology/syno_finder): a wireshark plugin to disassemble the Synology finder protocol (9999/udp)
 
