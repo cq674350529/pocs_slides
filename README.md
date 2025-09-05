@@ -8,6 +8,8 @@ Sharing my advisory, poc, slides and scripts to IoT / protocol security. You can
 
 ### Slides
 
++ OffByOne2025: [Patch Diffing, You Are My Sword! A Deep Dive into Two Critical N-day Vulnerabilities in FortiGate](slides/OffByOne2025-Patch-Diffing-You-Are-My-Sword-A-Deep-Dive-into-Two-Critical-N-day-Vulnerabilities-in-FortiGate.pdf)  &nbsp;([video](https://www.youtube.com/watch?v=1pO7CUGpXH8))
+
 + BHEU2023: [Breaking Theoretical Limits: The Gap Between Virtual NICs and Physical Network Cards](http://i.blackhat.com/EU-23/Presentations/EU-23-Quan-Breaking-Theoretical-Limits_REV2.pdf)&nbsp;*(cooperated)*
 
 + BHEU2022: [LCDPwn: Breaking Enterprise-Things with Layer 2 Discovery Protocol Vulnerabilities Again](slides/EU-22-Chen-LCDPwn-Breaking-Enterprise.pdf)  &nbsp;([video](https://www.youtube.com/watch?v=qIwKg2qny0c))
