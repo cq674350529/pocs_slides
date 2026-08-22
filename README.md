@@ -1,9 +1,11 @@
+
+
 Sharing my advisory, poc, slides and scripts to IoT / protocol security. You can find me at:
 
 + Medium: [https://medium.com/@cq674350529](https://medium.com/@cq674350529)
 
 + Blog: [https://cq674350529.github.io/](https://cq674350529.github.io/)
-+ Mail: [cq674350529@163.com](mailto:cq674350529@163.org)
++ Mail: [cq674350529@163.com](mailto:cq674350529@163.com)
 + Twitter: [@cq674350529](https://twitter.com/cq674350529)
 
 ### Slides
@@ -32,4 +34,3 @@ Sharing my advisory, poc, slides and scripts to IoT / protocol security. You can
 ### Scripts
 
 + [syno_finder](scripts/Synology/syno_finder): a wireshark plugin to disassemble the Synology finder protocol (9999/udp)
-
